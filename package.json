@@ -1,22 +1,37 @@
 {
   "name": "koishi-plugin-danmaku-sync-qq",
-  "description": "",
+  "description": "Sync danmaku with QQ group messages",
   "version": "0.0.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
     "lib",
-    "dist"
+    "dist",
+    "public"
   ],
   "license": "MIT",
-  "scripts": {},
   "keywords": [
     "chatbot",
     "koishi",
     "plugin"
   ],
-  "devDependencies": {},
+  "scripts": {
+    "build-frontend": "cd frontend && npm install && npm run build",
+    "postinstall": "npm run build-frontend"
+  },
   "peerDependencies": {
     "koishi": "^4.18.3"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "5.0.1",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.77.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2",
+    "@types/express": "5.0.0"
   }
 }
