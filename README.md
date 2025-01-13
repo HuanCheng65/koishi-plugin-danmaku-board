@@ -1,6 +1,6 @@
-# koishi-plugin-danmaku-sync-qq-group
+# koishi-plugin-danmaku-board
 
-[![npm](https://img.shields.io/npm/v/koishi-plugin-danmaku-sync-qq-group?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-danmaku-sync-qq-group)
+[![npm](https://img.shields.io/npm/v/koishi-plugin-danmaku-board?style=flat-square)](https://www.npmjs.com/package/koishi-plugin-danmaku-board)
 
 实时同步 QQ 群消息的弹幕板，适用于晚会、活动等场景。
 
@@ -15,7 +15,7 @@
 ## 安装
 
 ```bash
-npm install koishi-plugin-danmaku-sync-qq-group
+npm install koishi-plugin-danmaku-board
 ```
 
 ## 配置项
