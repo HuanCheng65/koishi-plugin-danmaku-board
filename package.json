@@ -18,7 +18,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/koishijs/koishi-plugin-danmaku-board.git"
+    "url": "https://github.com/HuanCheng65/koishi-plugin-danmaku-board.git"
   },
   "koishi": {
     "description": {
