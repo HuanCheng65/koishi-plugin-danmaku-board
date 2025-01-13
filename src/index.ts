@@ -80,6 +80,7 @@ export interface Config {
   enableGroups: string[];
   messageInterval: number;
   messageLengthLimit: number;
+  moderationEnabled: boolean;
   moderationContextMessageCount: number;
   moderationPrompt: string;
   openaiBaseUrl: string;
@@ -96,20 +97,23 @@ export const Config: Schema<Config> = Schema.object({
     .default(1000)
     .description("消息间隔时间(ms)"),
   messageLengthLimit: Schema.number().default(100).description("消息长度限制"),
+  moderationEnabled: Schema.boolean()
+    .default(false)
+    .description("是否开启审核功能"),
   moderationContextMessageCount: Schema.number()
     .default(3)
-    .description("审核上下文消息数量"),
+    .description("审核上下文消息数量，设为 0 只提交待发送的消息"),
   moderationPrompt: Schema.string()
     .role("textarea")
     .default(MODERATION_PROMPT)
     .description("审核提示词"),
   openaiBaseUrl: Schema.string()
     .default("https://api.openai.com")
-    .description("OpenAI API 地址"),
+    .description("OpenAI 兼容的 API 地址"),
   openaiModel: Schema.string()
     .default("gpt-3.5-turbo")
-    .description("OpenAI 模型"),
-  openaiApiKey: Schema.string().required().description("OpenAI API Key"),
+    .description("使用的模型名称"),
+  openaiApiKey: Schema.string().required().description("API Key"),
 });
 
 const logger = new Logger(name);
@@ -314,26 +318,31 @@ export function apply(ctx: Context, config: Config) {
 
     if (text.length > config.messageLengthLimit) return;
 
-    const contextMessage = contextMessages.get(session.event.user.id) || [];
+    if (config.moderationEnabled) {
+      const contextMessage = contextMessages.get(session.event.user.id) || [];
 
-    if (config.moderationContextMessageCount > 0) {
-      while (contextMessage.length + 1 > config.moderationContextMessageCount) {
-        contextMessage.shift();
+      if (config.moderationContextMessageCount > 0) {
+        while (
+          contextMessage.length + 1 >
+          config.moderationContextMessageCount
+        ) {
+          contextMessage.shift();
+        }
+        contextMessage.push(text);
+        contextMessages.set(session.event.user.id, contextMessage);
+      } else {
+        contextMessages.set(session.event.user.id, []);
       }
-      contextMessage.push(text);
-      contextMessages.set(session.event.user.id, contextMessage);
-    } else {
-      contextMessages.set(session.event.user.id, []);
+
+      const moderationResult = await checkContent(
+        text,
+        contextMessage.slice(0, -1),
+        config.moderationPrompt,
+        config
+      );
+
+      if (!moderationResult) return;
     }
-
-    const moderationResult = await checkContent(
-      text,
-      contextMessage.slice(0, -1),
-      config.moderationPrompt,
-      config
-    );
-
-    if (!moderationResult) return;
 
     logger.info("Sending danmaku: %O", content);
 
