@@ -113,7 +113,7 @@ export const Config: Schema<Config> = Schema.object({
   openaiModel: Schema.string()
     .default("gpt-3.5-turbo")
     .description("使用的模型名称"),
-  openaiApiKey: Schema.string().required().description("API Key"),
+  openaiApiKey: Schema.string().description("API Key"),
 });
 
 const logger = new Logger(name);
@@ -217,6 +217,11 @@ async function checkContent(
       `Content ${content} Moderation result: ${result.result}, class: ${result.class}`
     );
     return result.result;
+  }
+
+  if (!config.openaiApiKey) {
+    logger.warn("OpenAI API key is not set, skipping moderation");
+    return true;
   }
 
   const openai = new OpenAI({
