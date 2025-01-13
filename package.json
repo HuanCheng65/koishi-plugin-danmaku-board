@@ -1,6 +1,6 @@
 {
-  "name": "koishi-plugin-danmaku-sync-qq-group",
-  "description": "Sync danmaku with QQ group messages",
+  "name": "koishi-plugin-danmaku-board",
+  "description": "A real-time danmaku (bullet comments) board that syncs QQ group messages, perfect for events and live shows",
   "version": "0.0.1",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -13,8 +13,19 @@
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "danmaku"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/koishijs/koishi-plugin-danmaku-board.git"
+  },
+  "koishi": {
+    "description": {
+      "en": "A real-time danmaku (bullet comments) board that syncs QQ group messages, perfect for events and live shows",
+      "zh": "一个实时弹幕板，可以同步 QQ 群消息，适用于晚会、活动等场景"
+    }
+  },
   "scripts": {
     "build-frontend": "cd frontend && npm install && npm run build",
     "postinstall": "npm run build-frontend"
