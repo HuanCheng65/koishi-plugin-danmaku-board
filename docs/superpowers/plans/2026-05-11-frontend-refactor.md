@@ -42,12 +42,15 @@ git stash push -u -m "pre-refactor wip"   # or commit if intentional
 - Create: `frontend/src/env.d.ts`
 - Rename: `frontend/vite.config.js` → `frontend/vite.config.ts`
 
-- [ ] **Step 1.1: Install TypeScript toolchain**
+- [ ] **Step 1.1: Install TypeScript toolchain and upgrade Vue**
 
 ```bash
 cd frontend
 npm install --save-dev typescript vue-tsc @types/node
+npm install vue@^3.5.0 @vitejs/plugin-vue@latest
 ```
+
+Vue is bumped from `^3.4.21` → `^3.5.x` so we can use `useTemplateRef` for type-safe template refs (Task 9 and Task 13). Vue 3.4 → 3.5 is a minor release with no breaking changes for this app.
 
 - [ ] **Step 1.2: Create `frontend/tsconfig.json`**
 
@@ -1391,10 +1394,10 @@ In App.vue:
 6. Add:
 
 ```ts
-import { ref, onBeforeUnmount } from 'vue';
+import { onBeforeUnmount, useTemplateRef } from 'vue';
 import { useDanmaku } from '@/composables/useDanmaku';
 
-const danmakuContainerRef = ref<HTMLDivElement | null>(null);
+const danmakuContainerRef = useTemplateRef<HTMLDivElement>('danmakuContainer');
 const { mount: mountDanmaku, destroy: destroyDanmaku } = useDanmaku();
 
 onMounted(() => {
@@ -1415,10 +1418,10 @@ onBeforeUnmount(() => {
 7. In the template, change `<div id="my-container"></div>` to:
 
 ```vue
-<div id="my-container" ref="danmakuContainerRef"></div>
+<div id="my-container" ref="danmakuContainer"></div>
 ```
 
-(Plain `ref` is used instead of `useTemplateRef` because the project's Vue is `^3.4.21`; `useTemplateRef` requires 3.5+.)
+(Task 1 bumped Vue to 3.5+, so `useTemplateRef` is available. The string `'danmakuContainer'` passed to `useTemplateRef` must match the `ref="..."` attribute in the template exactly.)
 
 - [ ] **Step 9.3: Verify**
 
@@ -1683,10 +1686,10 @@ git commit -m "refactor(frontend): extract DevDebugBar component"
 
 ```vue
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { onMounted, onBeforeUnmount, useTemplateRef } from 'vue';
 import { useDanmaku } from '@/composables/useDanmaku';
 
-const containerRef = ref<HTMLDivElement | null>(null);
+const containerRef = useTemplateRef<HTMLDivElement>('container');
 const { mount, destroy } = useDanmaku();
 
 onMounted(() => {
@@ -1699,7 +1702,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div id="my-container" ref="containerRef"></div>
+  <div id="my-container" ref="container"></div>
 </template>
 
 <!-- No scoped styles. #my-container is in base.css because the danmaku
