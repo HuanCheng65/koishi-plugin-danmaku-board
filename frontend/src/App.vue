@@ -1,30 +1,44 @@
-<script setup>
+<script setup lang="ts">
 import Danmaku from "danmaku";
 import { nextTick, onMounted, ref } from "vue";
-import { io } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
+import { QUIZ_OPTIONS } from "@shared/protocol";
+import type {
+  ClientToServerEvents,
+  ServerToClientEvents,
+  ReceiveDanmakuPayload,
+  RevokeDanmakuPayload,
+  QuizUpdatePayload,
+  LotteryWinner,
+  QuizOption,
+  QuizStatus,
+  AdminAction,
+} from "@shared/protocol";
+
+type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 // --- 状态定义 ---
-const isAdmin = ref(false);
-const quizStatus = ref("idle");
-const quizCounts = ref({ A: 0, B: 0, C: 0, D: 0 });
-const quizTotal = ref(0);
-const correctAnswer = ref(null);
-const quizVisible = ref(false);
+const isAdmin = ref<boolean>(false);
+const quizStatus = ref<QuizStatus>("idle");
+const quizCounts = ref<Record<QuizOption, number>>({ A: 0, B: 0, C: 0, D: 0 });
+const quizTotal = ref<number>(0);
+const correctAnswer = ref<QuizOption | null>(null);
+const quizVisible = ref<boolean>(false);
 
 // 倒计时视觉配置
-const timerDuration = ref(30);
-const timerKey = ref(0);
+const timerDuration = ref<number>(30);
+const timerKey = ref<number>(0);
 
 // --- 抽奖新增状态 ---
-const drawCount = ref(1);
-const winners = ref([]);
-const showWinners = ref(false);
+const drawCount = ref<number>(1);
+const winners = ref<LotteryWinner[]>([]);
+const showWinners = ref<boolean>(false);
 
-let socket = null;
+let socket: AppSocket | null = null;
 const isDebug = import.meta.env.DEV;
 
 // 计算百分比逻辑 (含赢家保底)
-const getPercentNum = (option) => {
+const getPercentNum = (option: QuizOption): number => {
   if (quizTotal.value === 0) {
     if (quizStatus.value === "revealed" && correctAnswer.value === option)
       return 15;
@@ -38,19 +52,19 @@ const getPercentNum = (option) => {
 };
 
 // --- Socket & Actions ---
-const sendDanmaku = (text) => {
+const sendDanmaku = (text: string): void => {
   if (socket)
     socket.emit("send_danmaku", { content: [{ type: "text", content: text }] });
 };
 
-const createTextElement = (text) => {
+const createTextElement = (text: string): HTMLSpanElement => {
   const span = document.createElement("span");
   span.classList.add("danmaku-text");
   span.textContent = text;
   return span;
 };
 
-const createFaceElement = (src, name) => {
+const createFaceElement = (src: string, name: string): HTMLImageElement => {
   const img = document.createElement("img");
   img.classList.add("danmaku-face");
   img.src = src;
@@ -58,7 +72,7 @@ const createFaceElement = (src, name) => {
   return img;
 };
 
-const adminAction = (action, arg = null) => {
+const adminAction = (action: AdminAction['action'], arg: any = null): void => {
   if (!socket) return;
   if (action === "start") {
     timerKey.value++;
@@ -69,22 +83,22 @@ const adminAction = (action, arg = null) => {
     winners.value = [];
     showWinners.value = false;
   }
-  socket.emit("admin_control", { action, arg });
+  socket.emit("admin_control", { action, arg } as AdminAction);
 };
 
 onMounted(() => {
   const params = new URLSearchParams(window.location.search);
   if (params.get("role") === "admin") isAdmin.value = true;
 
-  socket = io();
+  socket = io() as AppSocket;
 
   nextTick(() => {
     const danmaku = new Danmaku({
-      container: document.getElementById("my-container"),
+      container: document.getElementById("my-container")!,
       engine: "dom",
     });
 
-    socket.on("receive_danmaku", (data) => {
+    socket!.on("receive_danmaku", (data: ReceiveDanmakuPayload) => {
       danmaku.emit({
         render() {
           const container = document.createElement("div");
@@ -95,14 +109,14 @@ onMounted(() => {
             if (item.type === "text")
               container.appendChild(createTextElement(item.content));
             else if (item.type === "face")
-              container.appendChild(createFaceElement(item.src, item.name));
+              container.appendChild(createFaceElement(item.src ?? "", item.name));
           });
           return container;
         },
       });
     });
 
-    socket.on("revoke_danmaku", (data) => {
+    socket!.on("revoke_danmaku", (data: RevokeDanmakuPayload) => {
       if (!data.id) return;
 
       // 在容器内查找对应 ID 的弹幕元素
@@ -113,7 +127,7 @@ onMounted(() => {
       // 查找带有对应 data-id 的元素
       const targetElement = container.querySelector(
         `.danmaku-item[data-id="${data.id}"]`
-      );
+      ) as HTMLElement | null;
 
       if (targetElement) {
         targetElement.style.opacity = "0";
@@ -125,7 +139,7 @@ onMounted(() => {
       }
     });
 
-    socket.on("quiz_update", (data) => {
+    socket!.on("quiz_update", (data: QuizUpdatePayload) => {
       quizStatus.value = data.status;
       quizCounts.value = data.counts;
       quizTotal.value = data.total;
@@ -137,7 +151,7 @@ onMounted(() => {
       }
     });
 
-    socket.on("lottery_result", (data) => {
+    socket!.on("lottery_result", (data: LotteryWinner[]) => {
       winners.value = data;
       showWinners.value = true;
     });
@@ -245,7 +259,7 @@ onMounted(() => {
 
       <div class="stacked-chart-track">
         <div
-          v-for="opt in ['A', 'B', 'C', 'D']"
+          v-for="opt in QUIZ_OPTIONS"
           :key="opt"
           class="chart-segment"
           :class="[
