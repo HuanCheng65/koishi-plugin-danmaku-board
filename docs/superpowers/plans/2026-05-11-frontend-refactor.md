@@ -69,9 +69,8 @@ Vue is bumped from `^3.4.21` → `^3.5.x` so we can use `useTemplateRef` for typ
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@shared/*": ["../shared/*"]
     },
     "noEmit": true,
