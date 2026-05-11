@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import Danmaku from "danmaku";
-import { nextTick, onMounted, ref } from "vue";
-import type {
-  ReceiveDanmakuPayload,
-  RevokeDanmakuPayload,
-} from "@shared/protocol";
+import { onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue";
 import { useSocket } from "@/composables/useSocket";
 import { useQuiz } from "@/composables/useQuiz";
 import { useLottery } from "@/composables/useLottery";
+import { useDanmaku } from "@/composables/useDanmaku";
 import { QUIZ_OPTIONS } from "@/constants/quiz";
 
 const socket = useSocket();
@@ -38,73 +34,20 @@ const sendDanmaku = (text: string): void => {
   socket.emit("send_danmaku", { content: [{ type: "text", content: text }] });
 };
 
-const createTextElement = (text: string): HTMLSpanElement => {
-  const span = document.createElement("span");
-  span.classList.add("danmaku-text");
-  span.textContent = text;
-  return span;
-};
-
-const createFaceElement = (src: string, name: string): HTMLImageElement => {
-  const img = document.createElement("img");
-  img.classList.add("danmaku-face");
-  img.src = src;
-  img.alt = name;
-  return img;
-};
+const danmakuContainerRef = useTemplateRef<HTMLDivElement>('danmakuContainer');
+const { mount: mountDanmaku, destroy: destroyDanmaku } = useDanmaku();
 
 onMounted(() => {
   const params = new URLSearchParams(window.location.search);
   if (params.get("role") === "admin") isAdmin.value = true;
 
-  nextTick(() => {
-    const danmaku = new Danmaku({
-      container: document.getElementById("my-container")!,
-      engine: "dom",
-    });
+  if (danmakuContainerRef.value) {
+    mountDanmaku(danmakuContainerRef.value);
+  }
+});
 
-    socket.on("receive_danmaku", (data: ReceiveDanmakuPayload) => {
-      danmaku.emit({
-        render() {
-          const container = document.createElement("div");
-          container.classList.add("danmaku-item");
-          if (data.id) container.dataset.id = data.id;
-          if (data.color) container.style.color = data.color;
-          data.content.forEach((item) => {
-            if (item.type === "text")
-              container.appendChild(createTextElement(item.content));
-            else if (item.type === "face")
-              container.appendChild(createFaceElement(item.src ?? "", item.name));
-          });
-          return container;
-        },
-      });
-    });
-
-    socket.on("revoke_danmaku", (data: RevokeDanmakuPayload) => {
-      if (!data.id) return;
-
-      // 在容器内查找对应 ID 的弹幕元素
-      // 这里的 #my-container 是你在 html 里定义的 id
-      const container = document.getElementById("my-container");
-      if (!container) return;
-
-      // 查找带有对应 data-id 的元素
-      const targetElement = container.querySelector(
-        `.danmaku-item[data-id="${data.id}"]`
-      ) as HTMLElement | null;
-
-      if (targetElement) {
-        targetElement.style.opacity = "0";
-
-        // 稍后从 DOM 中完全移除 (防止占用位置或由于弹幕引擎重绘导致闪现)
-        setTimeout(() => {
-          targetElement.remove();
-        }, 200);
-      }
-    });
-
-  });
+onBeforeUnmount(() => {
+  destroyDanmaku();
 });
 </script>
 
@@ -115,7 +58,7 @@ onMounted(() => {
     </div>
   </template>
 
-  <div id="my-container"></div>
+  <div id="my-container" ref="danmakuContainer"></div>
 
   <transition name="lottery-slide">
     <div v-if="showWinners && winners.length > 0" class="flat-lottery-bar">
