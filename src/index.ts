@@ -412,7 +412,8 @@ export function apply(ctx: Context, config: Config) {
           quizState.status = "locked";
           break;
         case "answer":
-          // discriminated union narrows payload.arg to QuizOption
+          // arg is QuizOption per the typed channel, but socket input is untrusted —
+          // keep a runtime guard before mutating state
           if (/^[ABCD]$/.test(payload.arg)) {
             quizState.status = "revealed";
             quizState.correctAnswer = payload.arg;
@@ -438,7 +439,7 @@ export function apply(ctx: Context, config: Config) {
           }
 
           // 3. 截取指定数量
-          const drawCount = Number.isFinite(payload.arg) ? payload.arg : 1;
+          const drawCount = Number.isFinite(payload.arg) && payload.arg > 0 ? payload.arg : 1;
           const winners: LotteryWinner[] = candidates.slice(0, drawCount);
 
           // 4. 广播结果
