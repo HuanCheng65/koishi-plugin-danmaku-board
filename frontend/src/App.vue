@@ -4,12 +4,10 @@ import { nextTick, onMounted, ref } from "vue";
 import type {
   ReceiveDanmakuPayload,
   RevokeDanmakuPayload,
-  QuizUpdatePayload,
-  LotteryWinner,
-  AdminAction,
 } from "@shared/protocol";
 import { useSocket } from "@/composables/useSocket";
 import { useQuiz } from "@/composables/useQuiz";
+import { useLottery } from "@/composables/useLottery";
 import { QUIZ_OPTIONS } from "@/constants/quiz";
 
 const socket = useSocket();
@@ -29,20 +27,11 @@ const {
 // --- 状态定义 ---
 const isAdmin = ref<boolean>(false);
 
-// --- 抽奖新增状态 ---
+// --- 抽奖状态 ---
 const drawCount = ref<number>(1);
-const winners = ref<LotteryWinner[]>([]);
-const showWinners = ref<boolean>(false);
+const { winners, visible: showWinners } = useLottery();
 
 const isDebug = import.meta.env.DEV;
-
-function adminActionWithLotteryReset(payload: AdminAction) {
-  if (payload.action === 'start' || payload.action === 'reset') {
-    winners.value = [];
-    showWinners.value = false;
-  }
-  sendAdmin(payload);
-}
 
 // --- Socket & Actions ---
 const sendDanmaku = (text: string): void => {
@@ -115,16 +104,6 @@ onMounted(() => {
       }
     });
 
-    socket.on("quiz_update", (data: QuizUpdatePayload) => {
-      if (data.status === "idle" || data.status === "active") {
-        showWinners.value = false;
-      }
-    });
-
-    socket.on("lottery_result", (data: LotteryWinner[]) => {
-      winners.value = data;
-      showWinners.value = true;
-    });
   });
 });
 </script>
@@ -294,7 +273,7 @@ onMounted(() => {
       <div class="label">2. 流程控制</div>
       <div class="btn-row">
         <button
-          @click="adminActionWithLotteryReset({ action: 'start' })"
+          @click="sendAdmin({ action: 'start' })"
           :disabled="quizStatus === 'active'"
           class="btn-primary"
         >
@@ -307,7 +286,7 @@ onMounted(() => {
         >
           ⏸ 锁榜
         </button>
-        <button @click="adminActionWithLotteryReset({ action: 'reset' })" class="btn-danger">
+        <button @click="sendAdmin({ action: 'reset' })" class="btn-danger">
           🔄 关闭
         </button>
       </div>

@@ -11,3 +11,9 @@ export function useSocket(): AppSocket {
   }
   return _socket;
 }
+
+// Test-only: allow tests to inject a mock socket.
+// Do not call from production code.
+export function __setSocketForTesting(s: AppSocket | null): void {
+  _socket = s;
+}
