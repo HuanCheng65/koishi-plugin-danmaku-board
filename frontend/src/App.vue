@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import Danmaku from "danmaku";
 import { nextTick, onMounted, ref } from "vue";
-import { io, Socket } from "socket.io-client";
 import { QUIZ_OPTIONS } from "@shared/protocol";
 import type {
-  ClientToServerEvents,
-  ServerToClientEvents,
   ReceiveDanmakuPayload,
   RevokeDanmakuPayload,
   QuizUpdatePayload,
@@ -14,8 +11,9 @@ import type {
   QuizStatus,
   AdminAction,
 } from "@shared/protocol";
+import { useSocket } from "@/composables/useSocket";
 
-type AppSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+const socket = useSocket();
 
 // --- 状态定义 ---
 const isAdmin = ref<boolean>(false);
@@ -34,7 +32,6 @@ const drawCount = ref<number>(1);
 const winners = ref<LotteryWinner[]>([]);
 const showWinners = ref<boolean>(false);
 
-let socket: AppSocket | null = null;
 const isDebug = import.meta.env.DEV;
 
 // 计算百分比逻辑 (含赢家保底)
@@ -53,8 +50,7 @@ const getPercentNum = (option: QuizOption): number => {
 
 // --- Socket & Actions ---
 const sendDanmaku = (text: string): void => {
-  if (socket)
-    socket.emit("send_danmaku", { content: [{ type: "text", content: text }] });
+  socket.emit("send_danmaku", { content: [{ type: "text", content: text }] });
 };
 
 const createTextElement = (text: string): HTMLSpanElement => {
@@ -73,7 +69,6 @@ const createFaceElement = (src: string, name: string): HTMLImageElement => {
 };
 
 const adminAction = (action: AdminAction['action'], arg: any = null): void => {
-  if (!socket) return;
   if (action === "start") {
     timerKey.value++;
     winners.value = [];
@@ -90,15 +85,13 @@ onMounted(() => {
   const params = new URLSearchParams(window.location.search);
   if (params.get("role") === "admin") isAdmin.value = true;
 
-  socket = io() as AppSocket;
-
   nextTick(() => {
     const danmaku = new Danmaku({
       container: document.getElementById("my-container")!,
       engine: "dom",
     });
 
-    socket!.on("receive_danmaku", (data: ReceiveDanmakuPayload) => {
+    socket.on("receive_danmaku", (data: ReceiveDanmakuPayload) => {
       danmaku.emit({
         render() {
           const container = document.createElement("div");
@@ -116,7 +109,7 @@ onMounted(() => {
       });
     });
 
-    socket!.on("revoke_danmaku", (data: RevokeDanmakuPayload) => {
+    socket.on("revoke_danmaku", (data: RevokeDanmakuPayload) => {
       if (!data.id) return;
 
       // 在容器内查找对应 ID 的弹幕元素
@@ -139,7 +132,7 @@ onMounted(() => {
       }
     });
 
-    socket!.on("quiz_update", (data: QuizUpdatePayload) => {
+    socket.on("quiz_update", (data: QuizUpdatePayload) => {
       quizStatus.value = data.status;
       quizCounts.value = data.counts;
       quizTotal.value = data.total;
@@ -151,7 +144,7 @@ onMounted(() => {
       }
     });
 
-    socket!.on("lottery_result", (data: LotteryWinner[]) => {
+    socket.on("lottery_result", (data: LotteryWinner[]) => {
       winners.value = data;
       showWinners.value = true;
     });
