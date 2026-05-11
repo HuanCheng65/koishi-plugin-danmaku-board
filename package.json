@@ -2,8 +2,8 @@
   "name": "koishi-plugin-danmaku-board",
   "description": "A real-time danmaku (bullet comments) board that syncs QQ group messages, perfect for events and live shows",
   "version": "1.0.3",
-  "main": "lib/index.js",
-  "typings": "lib/index.d.ts",
+  "main": "lib/src/index.js",
+  "typings": "lib/src/index.d.ts",
   "files": [
     "lib",
     "dist",
@@ -43,6 +43,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2",
-    "@types/express": "5.0.0"
+    "@types/express": "5.0.0",
+    "typescript": "^6.0.3"
   }
 }

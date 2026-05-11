@@ -69,9 +69,8 @@ Vue is bumped from `^3.4.21` → `^3.5.x` so we can use `useTemplateRef` for typ
     "skipLibCheck": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@shared/*": ["../shared/*"]
     },
     "noEmit": true,
@@ -180,12 +179,12 @@ export const QUIZ_OPTIONS = ['A', 'B', 'C', 'D'] as const satisfies readonly Qui
 // ── 弹幕内容 ───────────────────────────────────
 export type DanmakuItem =
   | { type: 'text'; content: string }
-  | { type: 'face'; id?: number; name: string; src: string };
+  | { type: 'face'; id?: number; name: string; src?: string };
 
 // ── 事件 payload ───────────────────────────────
 export interface ReceiveDanmakuPayload {
   id?: string;
-  sender: { id: string; name: string };
+  sender: { id: string; name?: string };
   group: { id: string };
   content: DanmakuItem[];
   text: string;
@@ -259,15 +258,13 @@ Replace `tsconfig.json` with:
     "types": [
       "node",
       "yml-register/types"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["shared/*"]
-    }
+    ]
   },
   "include": ["src", "shared"]
 }
 ```
+
+> **Note:** only the frontend uses the `@shared/*` alias (resolved at build time by Vite + vue-tsc). The backend imports `shared/` via relative paths, because tsc does not rewrite import specifiers at emit.
 
 - [ ] **Step 2.3: Update root `package.json` main/typings paths**
 
@@ -291,6 +288,12 @@ npx tsc --noEmit -p .
 ```
 
 Expected: no errors. The `shared/protocol.ts` file should be picked up.
+
+**TS 6 environment note.** If `npx tsc` resolves to TypeScript 6 (the latest at this writing), it will:
+1. Treat `moduleResolution: "node"` as deprecated → add `"ignoreDeprecations": "6.0"` to compilerOptions.
+2. Default `strict: true` (TS 5 defaulted to false) → add `"strict": false` to compilerOptions to preserve the original loose checking (this codebase intentionally accesses Koishi `session.event.user` and similar union types without exhaustive narrowing; full strict-null work is out of scope).
+
+If `npx tsc` resolves to TypeScript 5, neither flag is needed; the file works as-is. Pin `typescript` to a stable version in root `package.json` devDependencies to make this deterministic.
 
 - [ ] **Step 2.5: Verify frontend can resolve `@shared`**
 
@@ -334,8 +337,8 @@ import type {
   ReceiveDanmakuPayload,
   RevokeDanmakuPayload,
   ServerToClientEvents,
-} from "@shared/protocol";
-import { QUIZ_OPTIONS } from "@shared/protocol";
+} from "../shared/protocol";
+import { QUIZ_OPTIONS } from "../shared/protocol";
 ```
 
 (Keep the existing `import { Server } from "socket.io"` etc.)
