@@ -1,28 +1,3 @@
-html,
-body {
-  background: transparent !important;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  font-family: "HarmonyOS Sans SC", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
-}
-#my-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-  padding: 4px;
-}
-.danmaku-item {
-  font-family: "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", "SimHei", sans-serif;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-  transition: opacity 0.2s ease;
-}
-
 /* =========================================
    1. Flat Lottery Bar (重构版：方正扁平)
    ========================================= */
@@ -438,25 +413,6 @@ body {
 .btn-gold:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.danmaku-item {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  color: white;
-}
-
-.danmaku-text {
-  font-size: 24px;
-  font-weight: bold;
-  text-shadow: 2px 2px 2px black;
-  line-height: 24px;
-}
-
-.danmaku-face {
-  width: 24px;
-  height: 24px;
 }
 
 /* --- 抽奖条专用动画 (精准同步版) --- */
