@@ -20,12 +20,14 @@ export function computePercent(args: {
   }
   const pct = (counts[option] / total) * 100;
   if (status === 'revealed' && correctAnswer === option) {
-    return Math.max(pct, 12);
+    return Math.max(Math.round(pct * 10) / 10, 12);
   }
   return Math.round(pct * 10) / 10;
 }
 
-export function useQuiz() {
+let _state: ReturnType<typeof createQuiz> | null = null;
+
+function createQuiz() {
   const socket = useSocket();
 
   const status = ref<QuizStatus>('idle');
@@ -72,4 +74,9 @@ export function useQuiz() {
     getPercent,
     sendAdmin,
   };
+}
+
+export function useQuiz() {
+  if (!_state) _state = createQuiz();
+  return _state;
 }

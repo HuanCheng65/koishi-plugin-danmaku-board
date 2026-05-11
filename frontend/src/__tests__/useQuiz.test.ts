@@ -66,4 +66,18 @@ describe('computePercent', () => {
       computePercent(make({ counts: { A: 7, B: 93, C: 0, D: 0 }, total: 100, status: 'revealed', correctAnswer: 'A', option: 'B' }))
     ).toBe(93);
   });
+
+  it('rounds the winner percentage to 0.1 precision when above the floor', () => {
+    expect(
+      computePercent(
+        make({
+          counts: { A: 33, B: 64, C: 0, D: 0 },
+          total: 97,
+          status: 'revealed',
+          correctAnswer: 'A',
+          option: 'A',
+        })
+      )
+    ).toBe(34);
+  });
 });
