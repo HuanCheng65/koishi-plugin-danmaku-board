@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue";
+import { ref } from "vue";
 import { useQuiz } from "@/composables/useQuiz";
 import { useLottery } from "@/composables/useLottery";
-import { useDanmaku } from "@/composables/useDanmaku";
 import { useAdminRole } from "@/composables/useAdminRole";
 import { QUIZ_OPTIONS } from "@/constants/quiz";
 import DevDebugBar from "@/components/DevDebugBar.vue";
+import DanmakuLayer from "@/components/DanmakuLayer.vue";
 
 const {
   status: quizStatus,
@@ -26,25 +26,11 @@ const drawCount = ref<number>(1);
 const { winners, visible: showWinners } = useLottery();
 
 const isDev = import.meta.env.DEV;
-
-const danmakuContainerRef = useTemplateRef<HTMLDivElement>('danmakuContainer');
-const { mount: mountDanmaku, destroy: destroyDanmaku } = useDanmaku();
-
-onMounted(() => {
-  if (danmakuContainerRef.value) {
-    mountDanmaku(danmakuContainerRef.value);
-  }
-});
-
-onBeforeUnmount(() => {
-  destroyDanmaku();
-});
 </script>
 
 <template>
   <DevDebugBar v-if="isDev" />
-
-  <div id="my-container" ref="danmakuContainer"></div>
+  <DanmakuLayer />
 
   <transition name="lottery-slide">
     <div v-if="showWinners && winners.length > 0" class="flat-lottery-bar">
