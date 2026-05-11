@@ -289,6 +289,12 @@ npx tsc --noEmit -p .
 
 Expected: no errors. The `shared/protocol.ts` file should be picked up.
 
+**TS 6 environment note.** If `npx tsc` resolves to TypeScript 6 (the latest at this writing), it will:
+1. Treat `moduleResolution: "node"` as deprecated → add `"ignoreDeprecations": "6.0"` to compilerOptions.
+2. Default `strict: true` (TS 5 defaulted to false) → add `"strict": false` to compilerOptions to preserve the original loose checking (this codebase intentionally accesses Koishi `session.event.user` and similar union types without exhaustive narrowing; full strict-null work is out of scope).
+
+If `npx tsc` resolves to TypeScript 5, neither flag is needed; the file works as-is. Pin `typescript` to a stable version in root `package.json` devDependencies to make this deterministic.
+
 - [ ] **Step 2.5: Verify frontend can resolve `@shared`**
 
 Create a throwaway test by adding to `frontend/src/main.js` (still .js for now):

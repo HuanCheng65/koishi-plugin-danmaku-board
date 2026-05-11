@@ -14,7 +14,12 @@
     "types": [
       "node",
       "yml-register/types"
-    ]
+    ],
+    "ignoreDeprecations": "6.0",
+    "strict": false
   },
-  "include": ["src", "shared"]
+  "include": [
+    "src",
+    "shared"
+  ]
 }
