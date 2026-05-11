@@ -48,28 +48,6 @@
   text-align: right;
 }
 
-.instruction-text {
-  font-family: "Microsoft YaHei", sans-serif;
-  font-size: 15px;
-  color: #ccc;
-  white-space: nowrap;
-}
-.key-box {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  padding: 0 6px;
-  border-radius: 4px;
-  font-family: "Impact", sans-serif;
-  margin: 0 2px;
-  line-height: 20px;
-}
-.key-box.winner-key {
-  background: #ffd700;
-  color: #000;
-  padding: 0 8px;
-  font-size: 16px;
-}
 .total-text b {
   color: #ffd700;
 }
