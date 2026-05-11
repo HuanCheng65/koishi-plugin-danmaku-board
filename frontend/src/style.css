@@ -22,29 +22,6 @@
   transform: translateY(120%);
 } /* 这里改成 120% 确保完全滑出 */
 
-.timer-border {
-  height: 6px;
-  width: 100%;
-  background: #ffffff;
-  transform-origin: center;
-  transform: scaleX(1);
-}
-.timer-border.running {
-  animation: shrinkCenter linear forwards;
-}
-@keyframes shrinkCenter {
-  from {
-    transform: scaleX(1);
-    background: #00ffaa;
-  }
-  50% {
-    background: #ffee00;
-  }
-  to {
-    transform: scaleX(0);
-    background: #ff0044;
-  }
-}
 
 .bar-info-grid {
   height: 36px;
