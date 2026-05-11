@@ -1,5 +1,3 @@
-import type { QuizOption } from '@shared/protocol';
-
 export { QUIZ_OPTIONS } from '@shared/protocol';
 export type { QuizOption } from '@shared/protocol';
 
