@@ -179,12 +179,12 @@ export const QUIZ_OPTIONS = ['A', 'B', 'C', 'D'] as const satisfies readonly Qui
 // ── 弹幕内容 ───────────────────────────────────
 export type DanmakuItem =
   | { type: 'text'; content: string }
-  | { type: 'face'; id?: number; name: string; src: string };
+  | { type: 'face'; id?: number; name: string; src?: string };
 
 // ── 事件 payload ───────────────────────────────
 export interface ReceiveDanmakuPayload {
   id?: string;
-  sender: { id: string; name: string };
+  sender: { id: string; name?: string };
   group: { id: string };
   content: DanmakuItem[];
   text: string;
@@ -258,15 +258,13 @@ Replace `tsconfig.json` with:
     "types": [
       "node",
       "yml-register/types"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["shared/*"]
-    }
+    ]
   },
   "include": ["src", "shared"]
 }
 ```
+
+> **Note:** only the frontend uses the `@shared/*` alias (resolved at build time by Vite + vue-tsc). The backend imports `shared/` via relative paths, because tsc does not rewrite import specifiers at emit.
 
 - [ ] **Step 2.3: Update root `package.json` main/typings paths**
 
@@ -333,8 +331,8 @@ import type {
   ReceiveDanmakuPayload,
   RevokeDanmakuPayload,
   ServerToClientEvents,
-} from "@shared/protocol";
-import { QUIZ_OPTIONS } from "@shared/protocol";
+} from "../shared/protocol";
+import { QUIZ_OPTIONS } from "../shared/protocol";
 ```
 
 (Keep the existing `import { Server } from "socket.io"` etc.)

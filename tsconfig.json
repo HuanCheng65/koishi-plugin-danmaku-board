@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "rootDir": "src",
     "outDir": "lib",
     "target": "es2022",
     "module": "commonjs",
@@ -17,7 +16,5 @@
       "yml-register/types"
     ]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src", "shared"]
 }
