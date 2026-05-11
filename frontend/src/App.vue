@@ -4,6 +4,7 @@ import { useSocket } from "@/composables/useSocket";
 import { useQuiz } from "@/composables/useQuiz";
 import { useLottery } from "@/composables/useLottery";
 import { useDanmaku } from "@/composables/useDanmaku";
+import { useAdminRole } from "@/composables/useAdminRole";
 import { QUIZ_OPTIONS } from "@/constants/quiz";
 
 const socket = useSocket();
@@ -20,8 +21,7 @@ const {
   sendAdmin,
 } = useQuiz();
 
-// --- 状态定义 ---
-const isAdmin = ref<boolean>(false);
+const { isAdmin } = useAdminRole();
 
 // --- 抽奖状态 ---
 const drawCount = ref<number>(1);
@@ -38,9 +38,6 @@ const danmakuContainerRef = useTemplateRef<HTMLDivElement>('danmakuContainer');
 const { mount: mountDanmaku, destroy: destroyDanmaku } = useDanmaku();
 
 onMounted(() => {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("role") === "admin") isAdmin.value = true;
-
   if (danmakuContainerRef.value) {
     mountDanmaku(danmakuContainerRef.value);
   }
