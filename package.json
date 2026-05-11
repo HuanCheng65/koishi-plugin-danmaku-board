@@ -31,13 +31,13 @@
     "prepare": "npm run build-frontend"
   },
   "peerDependencies": {
-    "koishi": "^4.18.3"
+    "koishi": "^4.18.9"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "5.0.1",
     "node-fetch": "^3.3.2",
-    "openai": "^4.77.0",
+    "openai": "^4.104.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1"
   },
