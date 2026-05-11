@@ -78,4 +78,12 @@ describe('useLottery visibility state machine', () => {
     mock.trigger('quiz_update', update('locked'));
     expect(visible.value).toBe(true);
   });
+
+  it('clears winners when quiz_update transitions to idle or active', () => {
+    const { winners } = useLottery();
+    mock.trigger('lottery_result', sampleWinners);
+    expect(winners.value).toEqual(sampleWinners);
+    mock.trigger('quiz_update', update('idle'));
+    expect(winners.value).toEqual([]);
+  });
 });

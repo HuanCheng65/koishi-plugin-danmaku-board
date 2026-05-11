@@ -22,6 +22,7 @@ function createLottery(): LotteryState {
   socket.on('quiz_update', (p: QuizUpdatePayload) => {
     if (p.status === 'idle' || p.status === 'active') {
       visible.value = false;
+      winners.value = [];
     }
   });
 
