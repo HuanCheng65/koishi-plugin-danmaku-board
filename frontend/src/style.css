@@ -47,21 +47,6 @@
 .grid-right {
   text-align: right;
 }
-.status-badge.live {
-  color: #ff3366;
-  animation: blink 1s infinite;
-}
-.status-badge.locked {
-  color: #ffcc00;
-}
-.status-badge.result {
-  color: #00ccff;
-}
-@keyframes blink {
-  50% {
-    opacity: 0.5;
-  }
-}
 
 .instruction-text {
   font-family: "Microsoft YaHei", sans-serif;
