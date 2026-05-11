@@ -1,31 +1,33 @@
 <script setup lang="ts">
 import Danmaku from "danmaku";
 import { nextTick, onMounted, ref } from "vue";
-import { QUIZ_OPTIONS } from "@shared/protocol";
 import type {
   ReceiveDanmakuPayload,
   RevokeDanmakuPayload,
   QuizUpdatePayload,
   LotteryWinner,
-  QuizOption,
-  QuizStatus,
   AdminAction,
 } from "@shared/protocol";
 import { useSocket } from "@/composables/useSocket";
+import { useQuiz } from "@/composables/useQuiz";
+import { QUIZ_OPTIONS } from "@/constants/quiz";
 
 const socket = useSocket();
 
+const {
+  status: quizStatus,
+  counts: quizCounts,
+  total: quizTotal,
+  correctAnswer,
+  timerDuration,
+  timerKey,
+  visible: quizVisible,
+  getPercent: getPercentNum,
+  sendAdmin,
+} = useQuiz();
+
 // --- 状态定义 ---
 const isAdmin = ref<boolean>(false);
-const quizStatus = ref<QuizStatus>("idle");
-const quizCounts = ref<Record<QuizOption, number>>({ A: 0, B: 0, C: 0, D: 0 });
-const quizTotal = ref<number>(0);
-const correctAnswer = ref<QuizOption | null>(null);
-const quizVisible = ref<boolean>(false);
-
-// 倒计时视觉配置
-const timerDuration = ref<number>(30);
-const timerKey = ref<number>(0);
 
 // --- 抽奖新增状态 ---
 const drawCount = ref<number>(1);
@@ -34,19 +36,13 @@ const showWinners = ref<boolean>(false);
 
 const isDebug = import.meta.env.DEV;
 
-// 计算百分比逻辑 (含赢家保底)
-const getPercentNum = (option: QuizOption): number => {
-  if (quizTotal.value === 0) {
-    if (quizStatus.value === "revealed" && correctAnswer.value === option)
-      return 15;
-    return 0;
+function adminActionWithLotteryReset(payload: AdminAction) {
+  if (payload.action === 'start' || payload.action === 'reset') {
+    winners.value = [];
+    showWinners.value = false;
   }
-  let percent = (quizCounts.value[option] / quizTotal.value) * 100;
-  if (quizStatus.value === "revealed" && correctAnswer.value === option) {
-    return Math.max(percent, 12);
-  }
-  return Math.round(percent * 10) / 10;
-};
+  sendAdmin(payload);
+}
 
 // --- Socket & Actions ---
 const sendDanmaku = (text: string): void => {
@@ -66,19 +62,6 @@ const createFaceElement = (src: string, name: string): HTMLImageElement => {
   img.src = src;
   img.alt = name;
   return img;
-};
-
-const adminAction = (action: AdminAction['action'], arg: any = null): void => {
-  if (action === "start") {
-    timerKey.value++;
-    winners.value = [];
-    showWinners.value = false;
-  }
-  if (action === "reset") {
-    winners.value = [];
-    showWinners.value = false;
-  }
-  socket.emit("admin_control", { action, arg } as AdminAction);
 };
 
 onMounted(() => {
@@ -133,12 +116,6 @@ onMounted(() => {
     });
 
     socket.on("quiz_update", (data: QuizUpdatePayload) => {
-      quizStatus.value = data.status;
-      quizCounts.value = data.counts;
-      quizTotal.value = data.total;
-      correctAnswer.value = data.correctAnswer;
-      quizVisible.value = data.status !== "idle";
-
       if (data.status === "idle" || data.status === "active") {
         showWinners.value = false;
       }
@@ -317,20 +294,20 @@ onMounted(() => {
       <div class="label">2. 流程控制</div>
       <div class="btn-row">
         <button
-          @click="adminAction('start')"
+          @click="adminActionWithLotteryReset({ action: 'start' })"
           :disabled="quizStatus === 'active'"
           class="btn-primary"
         >
           ▶ 开始
         </button>
         <button
-          @click="adminAction('stop')"
+          @click="sendAdmin({ action: 'stop' })"
           :disabled="quizStatus !== 'active'"
           class="btn-warning"
         >
           ⏸ 锁榜
         </button>
-        <button @click="adminAction('reset')" class="btn-danger">
+        <button @click="adminActionWithLotteryReset({ action: 'reset' })" class="btn-danger">
           🔄 关闭
         </button>
       </div>
@@ -339,9 +316,9 @@ onMounted(() => {
       <div class="label">3. 结果 & 抽奖</div>
       <div class="btn-row" style="margin-bottom: 8px">
         <button
-          v-for="opt in ['A', 'B', 'C', 'D']"
+          v-for="opt in QUIZ_OPTIONS"
           :key="opt"
-          @click="adminAction('answer', opt)"
+          @click="sendAdmin({ action: 'answer', arg: opt })"
         >
           {{ opt }}
         </button>
@@ -350,7 +327,7 @@ onMounted(() => {
       <div class="btn-row">
         <input type="number" v-model="drawCount" min="1" class="admin-input" />
         <button
-          @click="adminAction('draw', drawCount)"
+          @click="sendAdmin({ action: 'draw', arg: drawCount })"
           :disabled="quizStatus !== 'revealed'"
           class="btn-gold"
         >
