@@ -52,68 +52,6 @@
   background: rgba(255, 215, 0, 0.05); /* 极淡的金色背景，区分区域 */
 }
 
-/* 获奖卡片：纯方正设计 */
-.flat-winner-card {
-  display: flex;
-  align-items: center;
-  margin-right: 30px;
-  background: #1a1a1a; /* 卡片深色背景 */
-  padding: 0 15px 0 0; /* 右侧留白 */
-  height: 50px;
-
-  /* 进场动画 */
-  opacity: 0;
-  animation: slideInRight 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-
-  /* 边框设计：左边金色，整体无圆角 */
-  border-left: 4px solid #ffd700;
-}
-
-/* 正方形头像 */
-.sq-avatar {
-  width: 50px;
-  height: 50px;
-  background: #333;
-  margin-right: 10px;
-  overflow: hidden;
-}
-.sq-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 信息文字 */
-.sq-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.sq-name {
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  font-family: "Microsoft YaHei", sans-serif; /* 名字用黑体 */
-  line-height: 1.2;
-}
-.sq-id {
-  color: #888;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
 /* =========================================
    2. Quiz Bar (保持原有设计)
    ========================================= */
