@@ -5,6 +5,19 @@ import cors from "cors";
 import { createServer } from "node:http";
 import OpenAI from "openai";
 import path from "node:path";
+import type {
+  AdminAction,
+  ClientToServerEvents,
+  DanmakuItem,
+  LotteryWinner,
+  QuizOption,
+  QuizStatus,
+  QuizUpdatePayload,
+  ReceiveDanmakuPayload,
+  RevokeDanmakuPayload,
+  ServerToClientEvents,
+} from "../shared/protocol";
+import { QUIZ_OPTIONS } from "../shared/protocol";
 
 export const name = "Danmaku Sync";
 
@@ -164,21 +177,7 @@ function shouldSendMessage(elements: Element[]) {
   );
 }
 
-type ParsedElement = {
-  type: "text" | "face";
-  content?: string;
-  id?: number;
-  name?: string;
-  src?: string;
-};
-
-type ParsedMessage = {
-  text: "text" | "face";
-  content: ParsedElement[];
-  color?: string;
-};
-
-function toPlainText(elements: ParsedElement[]) {
+function toPlainText(elements: DanmakuItem[]) {
   return elements
     .map((element) => {
       if (element.type === "text") {
@@ -198,7 +197,7 @@ function parseMessage(elements: Element[]) {
 
   const content = elements
     .filter((element) => element.type === "text" || element.type === "face")
-    .map<ParsedElement>((element, index) => {
+    .map<DanmakuItem | undefined>((element, index) => {
       if (element.type === "text") {
         let content = element.attrs.content;
 
@@ -237,7 +236,7 @@ function parseMessage(elements: Element[]) {
         };
       }
     })
-    .filter((element) => element !== undefined);
+    .filter((element): element is DanmakuItem => element !== undefined);
 
   const text = toPlainText(content);
 
@@ -340,14 +339,14 @@ type UserInfo = {
   id: string;
   name: string;
   avatar: string;
-  answer: string;
+  answer: QuizOption;
 };
 
 type QuizState = {
-  status: "idle" | "active" | "locked" | "revealed";
+  status: QuizStatus;
   votes: Map<string, UserInfo>;
-  counts: Record<string, number>;
-  correctAnswer: string | null;
+  counts: Record<QuizOption, number>;
+  correctAnswer: QuizOption | null;
 };
 
 let quizState: QuizState = {
@@ -358,13 +357,14 @@ let quizState: QuizState = {
 };
 
 // 广播状态更新
-function broadcastQuizUpdate(io: Server) {
-  io.emit("quiz_update", {
+function broadcastQuizUpdate(io: Server<ClientToServerEvents, ServerToClientEvents>) {
+  const payload: QuizUpdatePayload = {
     status: quizState.status,
     counts: quizState.counts,
     total: quizState.votes.size,
     correctAnswer: quizState.correctAnswer,
-  });
+  };
+  io.emit("quiz_update", payload);
 }
 
 const lastMessageTime = new Map<string, number>();
@@ -379,7 +379,7 @@ export function apply(ctx: Context, config: Config) {
   const publicPath = path.resolve(__dirname, "../public");
   app.use(express.static(publicPath));
 
-  const io = new Server(server, {
+  const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
@@ -393,14 +393,13 @@ export function apply(ctx: Context, config: Config) {
       counts: quizState.counts,
       total: quizState.votes.size,
       correctAnswer: quizState.correctAnswer,
-    });
+    } satisfies QuizUpdatePayload);
 
     // --- 新增：监听管理员控制指令 ---
-    socket.on("admin_control", (payload) => {
-      const { action, arg } = payload;
-      logger.info(`Admin action received: ${action} ${arg || ""}`);
+    socket.on("admin_control", (payload: AdminAction) => {
+      logger.info(`Admin action received: ${payload.action}`);
 
-      switch (action) {
+      switch (payload.action) {
         case "start":
           quizState = {
             status: "active",
@@ -413,9 +412,10 @@ export function apply(ctx: Context, config: Config) {
           quizState.status = "locked";
           break;
         case "answer":
-          if (arg && /^[ABCD]$/.test(arg)) {
+          // discriminated union narrows payload.arg to QuizOption
+          if (/^[ABCD]$/.test(payload.arg)) {
             quizState.status = "revealed";
-            quizState.correctAnswer = arg;
+            quizState.correctAnswer = payload.arg;
           }
           break;
         case "reset":
@@ -423,7 +423,7 @@ export function apply(ctx: Context, config: Config) {
           // 重置时保留 counts 为 0，避免前端残留
           quizState.counts = { A: 0, B: 0, C: 0, D: 0 };
           break;
-        case "draw":
+        case "draw": {
           if (!quizState.correctAnswer) return;
 
           // 1. 筛选答对的用户
@@ -438,12 +438,13 @@ export function apply(ctx: Context, config: Config) {
           }
 
           // 3. 截取指定数量
-          const drawCount = parseInt(arg, 10) || 1;
-          const winners = candidates.slice(0, drawCount);
+          const drawCount = Number.isFinite(payload.arg) ? payload.arg : 1;
+          const winners: LotteryWinner[] = candidates.slice(0, drawCount);
 
           // 4. 广播结果
           io.emit("lottery_result", winners);
           break;
+        }
       }
       // 执行完操作后，广播给所有连接的客户端（大屏 + 管理员）
       broadcastQuizUpdate(io);
@@ -473,7 +474,8 @@ export function apply(ctx: Context, config: Config) {
     if (messageId) {
       logger.info("Revoking danmaku for message: %s", messageId);
       // 3. 通知前端撤回
-      io.emit("revoke_danmaku", { id: messageId });
+      const payload: RevokeDanmakuPayload = { id: messageId };
+      io.emit("revoke_danmaku", payload);
     }
   });
 
@@ -496,6 +498,7 @@ export function apply(ctx: Context, config: Config) {
       const cleanText = text.trim().toUpperCase();
       // 纯字母 A/B/C/D -> 视为投票指令，计票但不发送弹幕
       if (/^[ABCD]$/.test(cleanText)) {
+        const option = cleanText as QuizOption;
         const userId = session.event.user.id;
         const previousVote = quizState.votes.get(userId)?.answer;
 
@@ -510,10 +513,10 @@ export function apply(ctx: Context, config: Config) {
             session.event.user.username ||
             "神秘观众",
           avatar: session.event.user.avatar || "",
-          answer: cleanText,
+          answer: option,
         });
 
-        quizState.counts[cleanText]++;
+        quizState.counts[option]++;
         broadcastQuizUpdate(io);
         if (!config.showQuizAnswerDanmaku) return;
       }
@@ -568,18 +571,14 @@ export function apply(ctx: Context, config: Config) {
     // --- 3. 发送弹幕 ---
     logger.info("Sending danmaku: %O", content);
 
-    io.emit("receive_danmaku", {
+    const payload: ReceiveDanmakuPayload = {
       id: session.messageId,
-      sender: {
-        id: session.event.user.id,
-        name: session.event.user.name,
-      },
-      group: {
-        id: session.event.channel.id,
-      },
+      sender: { id: session.event.user.id, name: session.event.user.name },
+      group: { id: session.event.channel.id },
       content,
       text,
       color,
-    });
+    };
+    io.emit("receive_danmaku", payload);
   });
 }
