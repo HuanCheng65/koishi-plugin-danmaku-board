@@ -1,58 +1,4 @@
 /* =========================================
-   1. Flat Lottery Bar (重构版：方正扁平)
-   ========================================= */
-.flat-lottery-bar {
-  position: fixed;
-  bottom: 120px; /* 紧贴 quiz-bar (高度120px) 上方 */
-  left: 0;
-  width: 100%;
-  height: 80px; /* 稍微窄一点，精致 */
-  z-index: 9990;
-
-  display: flex;
-  background: #000000; /* 纯黑背景，与底部一致 */
-
-  /* 只有顶部加一条金线，作为视觉边界 */
-  border-top: 4px solid #ffd700;
-  
-  font-family: "Montserrat", "Impact", sans-serif;
-  overflow: hidden;
-}
-
-/* 左侧标题块：纯色块，无圆角 */
-.lottery-header {
-  width: 140px;
-  background: #ffd700; /* 冠军金 */
-  color: #000;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  line-height: 1;
-}
-.lottery-title {
-  font-size: 24px;
-  font-weight: 900;
-  letter-spacing: -1px;
-}
-.lottery-subtitle {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  margin-top: 4px;
-}
-
-/* 右侧列表区域 */
-.lottery-list-track {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding-left: 20px;
-  overflow: hidden;
-  background: rgba(255, 215, 0, 0.05); /* 极淡的金色背景，区分区域 */
-}
-
-/* =========================================
    2. Quiz Bar (保持原有设计)
    ========================================= */
 .flat-quiz-bar {
@@ -351,30 +297,4 @@
 .btn-gold:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-/* --- 抽奖条专用动画 (精准同步版) --- */
-.lottery-slide-enter-active {
-  /* 进场保持原样：慢速滑入 */
-  transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.lottery-slide-leave-active {
-  /* 关键修改 1：退场时间设为 0.35s (比底部条的 0.4s 略快一点点，防止尾部拖沓) */
-  /* 关键修改 2：使用与底部条完全一致的 cubic-bezier，确保启动速度同步 */
-  transition: all 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-.lottery-slide-enter-from {
-  opacity: 0;
-  transform: translateY(100%); 
-  z-index: -1; 
-}
-
-.lottery-slide-leave-to {
-  opacity: 0;
-  /* 关键修改 3：下落距离设为 300% (约240px) */
-  /* 解释：底部条下落120px。顶部条必须下落 >200px 才能看不见。*/
-  /* 设置为 300% 意味着它在同样的时间内跑得比底部条快，会产生“追尾”效果，从而消灭空隙 */
-  transform: translateY(300%); 
 }

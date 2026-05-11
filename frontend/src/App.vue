@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useQuiz } from "@/composables/useQuiz";
-import { useLottery } from "@/composables/useLottery";
 import { useAdminRole } from "@/composables/useAdminRole";
 import { QUIZ_OPTIONS } from "@/constants/quiz";
 import DevDebugBar from "@/components/DevDebugBar.vue";
 import DanmakuLayer from "@/components/DanmakuLayer.vue";
+import LotteryBar from '@/components/lottery/LotteryBar.vue';
 
 const {
   status: quizStatus,
@@ -23,7 +23,6 @@ const { isAdmin } = useAdminRole();
 
 // --- 抽奖状态 ---
 const drawCount = ref<number>(1);
-const { winners, visible: showWinners } = useLottery();
 
 const isDev = import.meta.env.DEV;
 </script>
@@ -31,32 +30,7 @@ const isDev = import.meta.env.DEV;
 <template>
   <DevDebugBar v-if="isDev" />
   <DanmakuLayer />
-
-  <transition name="lottery-slide">
-    <div v-if="showWinners && winners.length > 0" class="flat-lottery-bar">
-      <div class="lottery-header">
-        <div class="lottery-title">WINNERS</div>
-        <div class="lottery-subtitle">LUCKY DRAW</div>
-      </div>
-
-      <div class="lottery-list-track">
-        <div
-          v-for="(user, index) in winners"
-          :key="user.id"
-          class="flat-winner-card"
-          :style="{ animationDelay: index * 0.1 + 's' }"
-        >
-          <div class="sq-avatar">
-            <img :src="user.avatar" onerror="this.style.opacity=0" />
-          </div>
-          <div class="sq-info">
-            <div class="sq-name">{{ user.name }}</div>
-            <div class="sq-id">ID: {{ user.id }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </transition>
+  <LotteryBar />
 
   <transition name="slide-up">
     <div
