@@ -6,18 +6,9 @@ import { QUIZ_OPTIONS } from "@/constants/quiz";
 import DevDebugBar from "@/components/DevDebugBar.vue";
 import DanmakuLayer from "@/components/DanmakuLayer.vue";
 import LotteryBar from '@/components/lottery/LotteryBar.vue';
+import QuizBar from '@/components/quiz/QuizBar.vue';
 
-const {
-  status: quizStatus,
-  counts: quizCounts,
-  total: quizTotal,
-  correctAnswer,
-  timerDuration,
-  timerKey,
-  visible: quizVisible,
-  getPercent: getPercentNum,
-  sendAdmin,
-} = useQuiz();
+const { sendAdmin, timerDuration, status: quizStatus } = useQuiz();
 
 const { isAdmin } = useAdminRole();
 
@@ -32,106 +23,7 @@ const isDev = import.meta.env.DEV;
   <DanmakuLayer />
   <LotteryBar />
 
-  <transition name="slide-up">
-    <div
-      v-if="quizVisible || isAdmin"
-      class="flat-quiz-bar"
-      :class="{ 'admin-view': isAdmin }"
-    >
-      <div
-        class="timer-border"
-        :class="{ running: quizStatus === 'active' }"
-        :style="{ animationDuration: timerDuration + 's' }"
-        :key="timerKey"
-      ></div>
-
-      <div class="bar-info-grid">
-        <div class="grid-left">
-          <transition name="text-slide" mode="out-in">
-            <span v-if="quizStatus === 'active'" class="status-badge live"
-              >● LIVE</span
-            >
-            <span
-              v-else-if="quizStatus === 'locked'"
-              class="status-badge locked"
-              >🔒 LOCKED</span
-            >
-            <span
-              v-else-if="quizStatus === 'revealed'"
-              class="status-badge result"
-              >🎉 RESULT</span
-            >
-            <span v-else class="status-badge ready">READY</span>
-          </transition>
-        </div>
-
-        <div class="grid-center">
-          <transition name="text-slide" mode="out-in">
-            <div
-              v-if="quizStatus === 'active' || quizStatus === 'idle'"
-              key="tip-active"
-              class="instruction-text"
-            >
-              发送弹幕 <span class="key-box">A</span>
-              <span class="key-box">B</span> <span class="key-box">C</span>
-              <span class="key-box">D</span> 抢答
-            </div>
-            <div
-              v-else-if="quizStatus === 'locked'"
-              key="tip-locked"
-              class="instruction-text"
-            >
-              ✋ 答题结束 · 等待揭晓
-            </div>
-            <div v-else key="tip-result" class="instruction-text">
-              正确答案
-              <span class="key-box winner-key">{{ correctAnswer }}</span>
-            </div>
-          </transition>
-        </div>
-
-        <div class="grid-right total-text">
-          VOTES: <b>{{ quizTotal }}</b>
-        </div>
-      </div>
-
-      <div class="stacked-chart-track">
-        <div
-          v-for="opt in QUIZ_OPTIONS"
-          :key="opt"
-          class="chart-segment"
-          :class="[
-            'seg-' + opt.toLowerCase(),
-            {
-              'is-dimmed': quizStatus === 'revealed' && correctAnswer !== opt,
-              'is-winner': quizStatus === 'revealed' && correctAnswer === opt,
-            },
-          ]"
-          :style="{ width: getPercentNum(opt) + '%' }"
-        >
-          <div
-            class="seg-content"
-            v-if="
-              getPercentNum(opt) > 6 ||
-              (quizStatus === 'revealed' && correctAnswer === opt)
-            "
-          >
-            <span class="seg-label">{{ opt }}</span>
-            <span class="seg-data">{{ quizCounts[opt] }}</span>
-          </div>
-
-          <transition name="bounce-in">
-            <div
-              v-if="quizStatus === 'revealed' && correctAnswer === opt"
-              class="winner-check"
-            >
-              ✓
-            </div>
-          </transition>
-        </div>
-      </div>
-    </div>
-  </transition>
+  <QuizBar :admin-view="isAdmin" />
 
   <div v-if="isAdmin" class="admin-panel">
     <h3>📺 场控台</h3>
