@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue";
-import { useSocket } from "@/composables/useSocket";
 import { useQuiz } from "@/composables/useQuiz";
 import { useLottery } from "@/composables/useLottery";
 import { useDanmaku } from "@/composables/useDanmaku";
 import { useAdminRole } from "@/composables/useAdminRole";
 import { QUIZ_OPTIONS } from "@/constants/quiz";
-
-const socket = useSocket();
+import DevDebugBar from "@/components/DevDebugBar.vue";
 
 const {
   status: quizStatus,
@@ -27,12 +25,7 @@ const { isAdmin } = useAdminRole();
 const drawCount = ref<number>(1);
 const { winners, visible: showWinners } = useLottery();
 
-const isDebug = import.meta.env.DEV;
-
-// --- Socket & Actions ---
-const sendDanmaku = (text: string): void => {
-  socket.emit("send_danmaku", { content: [{ type: "text", content: text }] });
-};
+const isDev = import.meta.env.DEV;
 
 const danmakuContainerRef = useTemplateRef<HTMLDivElement>('danmakuContainer');
 const { mount: mountDanmaku, destroy: destroyDanmaku } = useDanmaku();
@@ -49,11 +42,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <template v-if="isDebug">
-    <div style="position: fixed; top: 0; left: 0; z-index: 10001">
-      <button @click="sendDanmaku('Hello')">Test</button>
-    </div>
-  </template>
+  <DevDebugBar v-if="isDev" />
 
   <div id="my-container" ref="danmakuContainer"></div>
 
